@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech-to-Text Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #controls { margin-bottom: 20px; }
+        #output { border: 1px solid #ccc; padding: 10px; min-height: 100px; width: 80%; }
+    </style>
+</head>
+<body>
+    <h1>STT Input</h1>
+    <div id="controls">
+        <button id="recordButton">🎤Start Recording</button>
+    </div>
+    <div>
+        <h2>Transcribed Text:</h2>
+        <div id="output" contenteditable="true" placeholder="Your transcribed text will appear here..."></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
