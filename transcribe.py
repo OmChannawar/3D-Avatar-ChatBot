@@ -1,9 +1,9 @@
 from elevenlabs import set_api_key, transcribe  # type: ignore
 
-# Set your ElevenLabs API key properly
+# Set ElevenLabs API key
 set_api_key("sk_75c715378ea8d19443b91f8bea354826131d667fea1eafeb")
 
-# Path to your audio file (.wav, .mp3, .webm, etc.)
+# Path to audio file (.wav, .mp3, .webm, etc.)
 audio_path = "sample.wav"
 
 # Perform transcription
