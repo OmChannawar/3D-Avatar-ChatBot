@@ -1,135 +1,199 @@
-// script.js
+// =======================
+// Google Font Injection
+// =======================
+const fontLink = document.createElement('link');
+fontLink.rel = 'stylesheet';
+fontLink.href = 'https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap';
+document.head.appendChild(fontLink);
 
-const recordButton = document.getElementById('recordButton');
-const outputDiv = document.getElementById('output');
+// =======================
+// Custom Styling Injection
+// =======================
+const style = document.createElement('style');
+style.textContent = `
+  body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background: #f7f9fb;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px;
+    border: 1px solid #e3e7ed;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: #222b45;
+  }
+  button {
+    background: linear-gradient(90deg, #4f8cff 0%, #3358ff 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(79,140,255,0.08);
+    margin-bottom: 20px;
+  }
+  button:hover {
+    background: linear-gradient(90deg, #3358ff 0%, #4f8cff 100%);
+    box-shadow: 0 4px 16px rgba(51,88,255,0.12);
+  }
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    font-size: 1rem;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #dbe2ea;
+    background: #f4f7fa;
+    resize: vertical;
+    color: #222b45;
+    box-sizing: border-box;
+    transition: border 0.2s;
+  }
+  textarea:focus {
+    border: 1.5px solid #4f8cff;
+    outline: none;
+    background: #fff;
+  }
+  .loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3358ff;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+    display: none;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @media (max-width: 700px) {
+    .container {
+      padding: 18px;
+    }
+    h1 {
+      font-size: 1.8rem;
+    }
+  }
+`;
+document.head.appendChild(style);
 
+// =======================
+// Build Interface Elements
+// =======================
+const body = document.body;
+
+const container = document.createElement('div');
+container.className = 'container';
+
+const title = document.createElement('h1');
+title.textContent = 'Speech to Text Interface';
+
+const recordButton = document.createElement('button');
+recordButton.id = 'recordButton';
+recordButton.textContent = 'Start Recording';
+
+const label = document.createElement('div');
+label.className = 'label';
+label.textContent = 'Transcribed Text:';
+
+const output = document.createElement('textarea');
+output.id = 'output';
+output.placeholder = 'Your transcribed text will appear here...';
+
+const loader = document.createElement('div');
+loader.className = 'loader';
+
+container.appendChild(title);
+container.appendChild(recordButton);
+container.appendChild(label);
+container.appendChild(loader);
+container.appendChild(output);
+body.appendChild(container);
+
+// =======================
+// Recording + Transcription Logic
+// =======================
 let mediaRecorder;
 let audioChunks = [];
 let isRecording = false;
 
-// Function to send audio to the backend for transcription
 async function sendAudioToBackend(audioBlob) {
-    outputDiv.textContent = 'Sending audio for transcription... Please wait.';
-    const formData = new FormData();
-    // Append the audio blob. The 'audio' key must match what your backend expects.
-    // 'recording.wav' is a suggested filename for the blob.
-    formData.append('audio', audioBlob, 'recording.wav');
+  output.value = '';
+  loader.style.display = 'block';
 
-    try {
-        const response = await fetch('/transcribe', {
-            method: 'POST',
-            body: formData,
-        });
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.wav');
 
-        if (!response.ok) {
-            // Check if the response is not OK (e.g., 404, 500)
-            const errorText = await response.text(); // Get error message from backend
-            throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
-        }
+  try {
+    const response = await fetch('/transcribe', {
+      method: 'POST',
+      body: formData,
+    });
 
-        const data = await response.json(); // Assuming backend returns JSON
-        console.log('Transcription received:', data);
-
-        // Call the function to display the transcribed text and optionally process it further
-        if (data.transcribedText) {
-            displayAndProcessText(data.transcribedText);
-        } else {
-            outputDiv.textContent = 'Transcription successful, but no text found in response.';
-        }
-
-    } catch (error) {
-        console.error('Error sending audio to backend:', error);
-        outputDiv.textContent = `Error during transcription: ${error.message}`;
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
     }
+
+    const data = await response.json();
+    output.value = data.transcribedText || 'Transcription completed, but no text found.';
+  } catch (error) {
+    console.error('Transcription error:', error);
+    output.value = `Error: ${error.message}`;
+  } finally {
+    loader.style.display = 'none';
+  }
 }
 
-// Function to display the transcribed text and optionally send for further processing
-function displayAndProcessText(transcribedText) {
-    outputDiv.textContent = transcribedText;
-    console.log('Transcribed text displayed:', transcribedText);
-
-    // *Optional: If there's a separate "processing" step after transcription*
-    // If the requirement is to send this text to *another* backend endpoint for further processing,
-    // you would make another fetch call here.
-    // Example:
-    // sendTextForFurtherProcessing(transcribedText);
-}
-
-// Optional function for further processing (uncomment and use if needed)
-/*
-async function sendTextForFurtherProcessing(text) {
-    try {
-        const response = await fetch('/process-text', { // Your backend endpoint for further processing
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text }),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status} - ${errorText}`);
-        }
-
-        const result = await response.json();
-        console.log('Text processed by backend:', result);
-        // You might update the UI with the result of this processing, e.g., outputDiv.textContent += "\nProcessed Result: " + result.someKey;
-    } catch (error) {
-        console.error('Error sending text for further processing:', error);
-        // outputDiv.textContent += `\nError in further processing: ${error.message}`;
-    }
-}
-*/
-
-// Event listener for the record button
+// =======================
+// Record Button Logic
+// =======================
 recordButton.addEventListener('click', async () => {
-    if (!isRecording) {
-        // --- Start recording ---
-        try {
-            // Request microphone access
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = []; // Clear previous audio chunks
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
 
-            // Event handler for when audio data is available
-            mediaRecorder.ondataavailable = event => {
-                audioChunks.push(event.data);
-            };
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
 
-            // Event handler for when recording stops
-            mediaRecorder.onstop = async () => {
-                // Combine all recorded chunks into a single Blob
-                // Using 'audio/wav' as a common format, but 'audio/webm' is also common and often smaller.
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                console.log('Audio recording stopped. Blob size:', audioBlob.size, 'bytes');
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        sendAudioToBackend(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
 
-                // Send the recorded audio blob to the backend
-                sendAudioToBackend(audioBlob);
-
-                // Stop all tracks in the media stream to release the microphone
-                stream.getTracks().forEach(track => track.stop());
-            };
-
-            // Start recording
-            mediaRecorder.start();
-            recordButton.textContent = 'Stop Recording';
-            outputDiv.textContent = 'Recording started... Speak now.';
-            outputDiv.style.color = '#333'; // Reset text color
-            isRecording = true;
-        } catch (error) {
-            console.error('Error accessing microphone:', error);
-            outputDiv.textContent = 'Error: Could not access microphone. Please allow access and try again.';
-            outputDiv.style.color = 'red'; // Indicate error
-        }
-    } else {
-        // --- Stop recording ---
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-        }
-        recordButton.textContent = 'Start Recording';
-        outputDiv.textContent = 'Recording stopped. Processing...';
-        outputDiv.style.color = '#333'; // Reset text color
-        isRecording = false;
+      mediaRecorder.start();
+      recordButton.textContent = 'Stop Recording';
+      output.value = 'Recording started... Speak now.';
+      isRecording = true;
+    } catch (error) {
+      console.error('Microphone error:', error);
+      output.value = 'Microphone access denied or not available.';
     }
+  } else {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+    recordButton.textContent = 'Start Recording';
+    isRecording = false;
+  }
 });
