@@ -1,10 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>STT Input</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Avatar Chatbot</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <script src="script.js"></script>
-</body>
+    <div id="app-container">
+        <div id="avatar-container">
+            </div>
+
+        <div id="chat-interface">
+            <div id="chat-display">
+                </div>
+            <div id="chat-input-area">
+                <input type="text" id="user-input" placeholder="Type your message...">
+                <button id="send-button">Send</button>
+                <button id="mic-button">
+                    <img src="mic-icon.png" alt="Microphone" style="width: 20px; height: 20px;">
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    </body>
 </html>
